@@ -1,4 +1,4 @@
-package poorman.utils.sql.manager;
+package poorman.utils.sql;
 
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -22,7 +22,6 @@ public class RelationalMapper {
 		for (int i = 0; i < rsmd.getColumnCount(); i++) {
 			columns.add(rsmd.getColumnName(i));
 		}
-
 		return null;
 	}
 

@@ -1,8 +1,11 @@
-package poorman.utils.reflection;
+package poorman.utils.objects;
 
 import java.lang.reflect.Field;
+import java.sql.ResultSet;
 import java.util.List;
 import java.util.Stack;
+
+import poorman.reflection.utils.ReflectionUtils;
 
 public class ClassesUtils {
 
@@ -10,17 +13,14 @@ public class ClassesUtils {
 
 		Object newObject = null;
 
-		try {
-			newObject = classToCreate.newInstance();
+		newObject = classToCreate.newInstance();
 
-			List<Field> newObjectFields = ReflectionUtils.getAllFields(newObject);
+		List<Field> newObjectFields = ReflectionUtils.getAllFields(newObject);
 
-			Stack<Field> existingFields = ReflectionUtils.getAllFieldsAsStack(object);
+		Stack<Field> existingFields = ReflectionUtils.getAllFieldsAsStack(object);
 
-			updateNewObject(newObjectFields, existingFields, newObject, object);
-		} catch (Exception e) {
+		updateNewObject(newObjectFields, existingFields, newObject, object);
 
-		}
 		return newObject;
 	}
 
@@ -54,7 +54,7 @@ public class ClassesUtils {
 		existingFields.removeElementAt(i);
 	}
 
-	public static <T> Object create(Class<T> classToCreate, List<Field> classFields, List<String >  ) {
+	public static Object createObjectFromResultSet(ResultSet rs, Class<?> classType) {
 
 		return null;
 	}
