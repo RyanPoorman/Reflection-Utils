@@ -1,7 +1,11 @@
 package poorman.object.utils.tests.resources;
 
-public class Employee extends Human {
+import java.io.Serializable;
 
+public class Employee extends Human implements Serializable{
+
+	 
+	private static final long serialVersionUID = 2374442334343093065L;
 	private String firstName;
 	private String lastName;
 	private double salary;

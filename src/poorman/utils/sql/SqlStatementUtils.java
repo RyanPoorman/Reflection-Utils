@@ -4,18 +4,18 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gson.Gson;
 
-import poorman.utils.objects.ClassesUtils;
+import poorman.utils.bean.BeanUtils;
 
 public class SqlStatementUtils {
 
 	private ResultSet rs;
-	private int returnSize;
 
 	public ResultSet executeSelect(String sql) {
 		return executeSelect(sql, new Object[0]);
@@ -32,27 +32,111 @@ public class SqlStatementUtils {
 		return this.rs;
 	}
 
+	/**
+	 * Returns a ResultSet based upon the queried statement
+	 *
+	 * @param sql = the String SQL statement
+	 * @return ResultSet
+	 * 
+	 * @author Ryan Poorman
+	 */
+	public static Object executeQuery(String sql) {
+		return executeQuery(sql, new Object[0]);
+	}
+	
+	/**
+	 * Returns a ResultSet based upon the queried statement
+	 *
+	 * @param sql = the String SQL statement
+	 * @param params = an array of parameters that will be used in a PreparedStatement
+	 * @return ResultSet
+	 * 
+	 * @author Ryan Poorman
+	 */
+	public static Object executeQuery(String sql, Object... params) {
+		ResultSet rs = null;
+		
+		try (Connection conn = getConnection(); PreparedStatement ps = createPreparedStatement(conn, sql, params)) {
+			rs = ps.executeQuery();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return rs;
+	}
+	
+	
+	/**
+	 * Returns a new instance of the classType parameter based upon the queried statement
+	 * in the form of a list with each element of the list being an object of Type T
+	 * 
+	 * @param sql = the String SQL statement
+	 * @param classType = the Type of Class that will be used to instantiate the objects
+	 * @return List<T>
+	 * 
+	 * @author Ryan Poorman
+	 */
 	public static Object executeQuery(String sql, Class<?> classType) {
 		return executeQuery(sql, classType, Integer.MAX_VALUE, new Object[0]);
 	}
-
+	
+	
+	/**
+	 * Returns a new instance of the classType parameter based upon the queried statement
+	 * in the form of a list with each element of the list being an object of Type T
+	 * 
+	 * @param sql = the String SQL statement
+	 * @param classType = the Type of Class that will be used to instantiate the objects
+	 * @param params = an array of parameters that will be used in a PreparedStatement
+	 * @return List<T>
+	 * 
+	 * @author Ryan Poorman
+	 */
 	public static Object executeQuery(String sql, Class<?> classType, Object... params) {
 		return executeQuery(sql, classType, Integer.MAX_VALUE, params);
 	}
+	
+	
+	/**
+	 * Returns a new instance of the classType parameter based upon the queried statement
+	 * in the form of a list with each element of the list being an object of Type T
+	 * 
+	 * @param sql = the String SQL statement
+	 * @param classType = the Type of Class that will be used to instantiate the objects
+	 * @param returnSize = optional functionality 
+	 * @return List<T>
+	 * 
+	 * @author Ryan Poorman
+	 */
+	public static Object executeQuery(String sql, Class<?> classType, int returnSize) {
+		return executeQuery(sql, classType, returnSize, new Object[0]);
+	}
 
-	public static Object executeQuery(String sql, Class<?> classType, int returnSize, Object... params) {
+	
+	/**
+	 * Returns a new instance of the classType parameter based upon the queried statement
+	 * in the form of a list with each element of the list being an object of Type T
+	 * 
+	 * @param sql = the String SQL statement
+	 * @param classType = the Type of Class that will be used to instantiate the objects
+	 * @param returnSize = optional functionality 
+	 * @param params = an array of parameters that will be used in a PreparedStatement
+	 * @return List<T>
+	 * 
+	 * @author Ryan Poorman
+	 */
+	public static <T> List<T> executeQuery(String sql, Class<?> classType, int returnSize, Object... params) {
 		ResultSet rs = null;
-		Object createdObject = null;
+		List<T> createdObjects = null;
 		returnSize = returnSize == 0 ? Integer.MAX_VALUE : returnSize;
 
 		try (Connection conn = getConnection(); PreparedStatement ps = createPreparedStatement(conn, sql, params)) {
 			rs = ps.executeQuery();
-			createdObject = createObjectFromResults(rs, classType, returnSize);
+			createdObjects.addAll(createObjectFromResultSet(rs, classType, returnSize));
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 
-		return createdObject;
+		return createdObjects;
 	}
 
 	public static String executeQueryToJSON(String sql, Class<?> classType) {
@@ -67,21 +151,25 @@ public class SqlStatementUtils {
 		return new Gson().toJson(executeQuery(sql, classType, returnSize, params), classType);
 	}
 
-	private static Object createObjectFromResults(ResultSet rs, Class<?> classType, int returnSize)
+	@SuppressWarnings("unchecked")
+	private static <T> List<T> createObjectFromResultSet(ResultSet rs, Class<?> classType, int returnSize)
 			throws SQLException {
 
-		List<Object> createdObjects = new ArrayList<Object>();
+		List<T> createdObjects = new ArrayList<>();
 
-		if (!rs.next()) {
-			return new Object();
+		if (!rs.next() || returnSize < 1) {
+			return new ArrayList<>();
 		} else {
+			ResultSetMetaData rsmd = rs.getMetaData();
 			do {
-				createdObjects.add(ClassesUtils.createObjectFromResultSet(rs, classType));
+				createdObjects.add((T) RelationalMapper.createMappedObject(classType, rsmd, rs));
 			} while (rs.next());
 		}
 
-		return returnSize > 1 ? createdObjects : createdObjects.get(0);
+		return createdObjects;
 	}
+	
+	
 
 	private static PreparedStatement createPreparedStatement(Connection conn, String sql, Object... params)
 			throws SQLException {

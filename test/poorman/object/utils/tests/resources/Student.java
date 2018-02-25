@@ -1,6 +1,10 @@
 package poorman.object.utils.tests.resources;
 
-public class Student extends Human {
+import java.io.Serializable;
+
+public class Student extends Human implements Serializable {
+	
+	private static final long serialVersionUID = 5806380837081813212L;
 	private String firstName;
 	private String lastName;
 	private int studentId;

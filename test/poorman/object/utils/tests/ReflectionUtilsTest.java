@@ -4,7 +4,7 @@ import org.junit.Test;
 
 import poorman.object.utils.tests.resources.Employee;
 import poorman.object.utils.tests.resources.Student;
-import poorman.reflection.utils.ReflectionUtils;
+import poorman.utils.reflection.ReflectionUtils;
 
 public class ReflectionUtilsTest {
 
